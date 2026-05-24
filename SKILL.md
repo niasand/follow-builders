@@ -18,7 +18,7 @@ digestible summaries of what they're saying.
 Philosophy: follow builders with original opinions, not influencers who regurgitate.
 
 **No API keys required.** The agent fetches X/Twitter content directly via
-OpenClaw/browser. Only Telegram or Email delivery needs optional API keys.
+opencli/browser.
 
 ## Detecting Platform
 
@@ -32,9 +32,7 @@ which openclaw 2>/dev/null && echo "PLATFORM=openclaw" || echo "PLATFORM=other"
   Cron uses `openclaw cron add`.
 
 - **Other** (Claude Code, Cursor, etc.): Non-persistent agent. Terminal closes = agent stops.
-  For automatic delivery, users MUST set up Telegram or Email. Without it, digests
-  are on-demand only (user types `/ai` to get one).
-  Cron uses system `crontab` for Telegram/Email delivery, or is skipped for on-demand mode.
+  Digests are on-demand only (user types `/ai` to get one).
 
 Save the detected platform in config.json as `"platform": "openclaw"` or `"platform": "other"`.
 
@@ -69,53 +67,9 @@ For weekly, also ask which day.
 
 ### Step 3: Delivery Method
 
-**If OpenClaw:** SKIP this step entirely. OpenClaw already delivers messages to the
-user's Telegram/Discord/WhatsApp/etc. Set `delivery.method` to `"stdout"` in config
-and move on.
-
-**If non-persistent agent (Claude Code, Cursor, etc.):**
-
-Tell the user:
-
-"Since you're not using a persistent agent, I need a way to send you the digest
-when you're not in this terminal. You have two options:
-
-1. **Telegram** — I'll send it as a Telegram message (free, takes ~5 min to set up)
-2. **Email** — I'll email it to you (requires a free Resend account)
-
-Or you can skip this and just type /ai whenever you want your digest — but it
-won't arrive automatically."
-
-**If they choose Telegram:**
-Guide the user step by step:
-1. Open Telegram and search for @BotFather
-2. Send /newbot to BotFather
-3. Choose a name (e.g. "My AI Digest")
-4. Choose a username (e.g. "myaidigest_bot") — must end in "bot"
-5. BotFather will give you a token like "7123456789:AAH..." — copy it
-6. Now open a chat with your new bot (search its username) and send it any message (e.g. "hi")
-7. This is important — you MUST send a message to the bot first, otherwise delivery won't work
-
-Then add the token to the .env file. To get the chat ID, run:
-```bash
-curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result'][0]['message']['chat']['id'])" 2>/dev/null || echo "No messages found — make sure you sent a message to your bot first"
-```
-
-Save the chat ID in config.json under `delivery.chatId`.
-
-**If they choose Email:**
-Ask for their email address.
-Then they need a Resend API key:
-1. Go to https://resend.com
-2. Sign up (free tier gives 100 emails/day — more than enough)
-3. Go to API Keys in the dashboard
-4. Create a new key and copy it
-
-Add the key to the .env file.
-
-**If they choose on-demand:**
-Set `delivery.method` to `"stdout"`. Tell them: "No problem — just type /ai
-whenever you want your digest. No automatic delivery will be set up."
+Delivery is always `stdout` — the digest is output directly in the current session.
+On OpenClaw, the channel system handles routing. On other platforms, the user
+invokes `/ai` on demand.
 
 ### Step 4: Language
 
@@ -124,32 +78,12 @@ Ask: "What language do you prefer for your digest?"
 - Chinese (translated from English sources)
 - Bilingual (both English and Chinese, side by side)
 
-### Step 5: API Keys (delivery only)
-
-**If the user chose "stdout" or "right here" delivery:** No API keys needed. Skip to Step 6.
-
-**If the user chose Telegram or Email delivery:**
-Create the .env file with only the delivery key they need:
-
-```bash
-mkdir -p ~/.follow-builders
-cat > ~/.follow-builders/.env << 'ENVEOF'
-# Telegram bot token (only if using Telegram delivery)
-# TELEGRAM_BOT_TOKEN=paste_your_token_here
-
-# Resend API key (only if using email delivery)
-# RESEND_API_KEY=paste_your_key_here
-ENVEOF
-```
-
-Uncomment only the line they need. Open the file for them to paste the key.
-
-### Step 6: Show Sources
+### Step 5: Show Sources
 
 Show the full list of default builders and podcasts being tracked.
 Read from `config/default-sources.json` and display as a clean list.
 
-### Step 7: Configuration Reminder
+### Step 6: Configuration Reminder
 
 "All your settings can be changed anytime through conversation:
 - 'Switch to weekly digests'
@@ -159,7 +93,7 @@ Read from `config/default-sources.json` and display as a clean list.
 
 No need to edit any files — just tell me what you want."
 
-### Step 8: Set Up Cron
+### Step 7: Set Up Cron
 
 Save the config (include all fields — fill in the user's choices):
 ```bash
@@ -172,9 +106,7 @@ cat > ~/.follow-builders/config.json << 'CFGEOF'
   "deliveryTime": "<HH:MM>",
   "weeklyDay": "<day of week, only if weekly>",
   "delivery": {
-    "method": "<stdout, telegram, or email>",
-    "chatId": "<telegram chat ID, only if telegram>",
-    "email": "<email address, only if email>"
+    "method": "stdout"
   },
   "onboardingComplete": true
 }
@@ -242,7 +174,7 @@ openclaw cron runs --id <jobId> --limit 1
 Skip cron setup entirely. Tell the user: "Since you chose on-demand delivery,
 there's no scheduled job. Just type /ai whenever you want your digest."
 
-### Step 9: Welcome Digest
+### Step 8: Welcome Digest
 
 **DO NOT skip this step.** Immediately after setting up the cron job, generate
 and send the user their first digest so they can see what it looks like.
@@ -260,8 +192,7 @@ After delivering the digest, ask for feedback:
 Just tell me and I'll adjust."
 
 Then add the appropriate closing line based on their setup:
-- **OpenClaw or Telegram/Email delivery:** "Your next digest will arrive
-  automatically at [their chosen time]."
+- **OpenClaw:** "Your next digest will arrive automatically at [their chosen time]."
 - **On-demand only:** "Type /ai anytime you want your next digest."
 
 Wait for their response and apply any feedback (update config.json or prompt files
@@ -387,17 +318,7 @@ Read `config.language`:
 
 ### Step 6: Deliver
 
-Read `config.delivery.method`:
-
-**If "telegram" or "email":**
-```bash
-echo '<your digest text>' > /tmp/fb-digest.txt
-cd ${CLAUDE_SKILL_DIR}/scripts && node deliver.js --file /tmp/fb-digest.txt 2>/dev/null
-```
-If delivery fails, show the digest in the terminal as fallback.
-
-**If "stdout" (default):**
-Just output the digest directly.
+Output the digest directly to stdout.
 
 ### Step 7: Archive (Feishu + Obsidian)
 
@@ -461,8 +382,6 @@ Apply the changes directly when asked.
 - "Switch to Chinese/English/bilingual" → Update `language` in config.json
 
 ### Delivery Changes
-- "Switch to Telegram/email" → Update `delivery.method` in config.json, guide user through setup if needed
-- "Change my email" → Update `delivery.email` in config.json
 - "Send to this chat instead" → Set `delivery.method` to "stdout"
 
 ### Prompt Changes
