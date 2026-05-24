@@ -431,7 +431,7 @@ feishu-cli perm public-update <doc_token> \
 ```bash
 mkdir -p "/Users/zhiwei/Downloads/local_obsidian/Documents/Clippings/ai_daily"
 cp ~/.follow-builders/digests/$(date +%Y-%m-%d).md \
-  "/Users/zhiwei/Downloads/local_obsidian/Documents/Clippings/ai_daily/AI Builders Digest $(date +%Y-%m-%d).md"
+  "/Users/zhiwei/Downloads/local_obsidian/Documents/Clippings/ai_daily/$(date +%Y-%m-%d)-AI Builders Digest.md"
 ```
 
 If either step fails, log the error but do NOT stop — the digest was already delivered.
