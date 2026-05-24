@@ -281,29 +281,31 @@ This outputs a JSON blob with:
 
 ### Step 2: Fetch X content
 
-**Primary method: GraphQL API via twitter-x-fetch**
+**Primary: opencli (browser-based, no API keys needed)**
 
-For each account in `sources.x_accounts`, run:
+For each account in `sources.x_accounts`, run in parallel (spawn subagents for speed):
+```bash
+opencli twitter tweets <handle> --limit 3 -f json
+```
+
+This fetches the user's 3 most recent tweets via browser automation.
+Output fields: `id`, `author`, `created_at`, `text`, `likes`, `retweets`, `replies`, `views`, `url`.
+
+Filter out retweets (`is_retweet: true`) and only keep posts from the last 24 hours.
+
+**Fallback: GraphQL API via twitter-x-fetch**
+
+If `opencli` fails (browser not available, session expired), try:
 ```bash
 cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db
 ```
 
-This uses X's internal GraphQL API with credentials parsed from
-`/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`. Collect:
-- Author name and handle
-- Tweet text (full text, not truncated)
-- Tweet URL
-- Engagement metrics if available
+This reads credentials from `/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`.
 
-Skip retweets and replies. Only include posts from the last 24 hours.
+**Last resort: cdp-bridge**
 
-**Fallback: opencli**
-
-If the GraphQL method fails (no curl files, expired cookies, rate limited),
-use `opencli` to fetch the account's timeline:
-```bash
-opencli x <handle>
-```
+If both methods fail, spawn an Explore subagent to use `browser_navigate` /
+`browser_extract` on `https://x.com/<handle>` via the user's real browser session.
 
 **If no new posts are found from any account**, tell the user:
 "No new updates from your builders today. Check back tomorrow!" Then stop.
