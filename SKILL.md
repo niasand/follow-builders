@@ -18,23 +18,7 @@ digestible summaries of what they're saying.
 Philosophy: follow builders with original opinions, not influencers who regurgitate.
 
 **No API keys required.** The agent fetches X/Twitter content directly via
-opencli/browser.
-
-## Detecting Platform
-
-Before doing anything, detect which platform you're running on by running:
-```bash
-which openclaw 2>/dev/null && echo "PLATFORM=openclaw" || echo "PLATFORM=other"
-```
-
-- **OpenClaw** (`PLATFORM=openclaw`): Persistent agent with built-in messaging channels.
-  Delivery is automatic via OpenClaw's channel system. No need to ask about delivery method.
-  Cron uses `openclaw cron add`.
-
-- **Other** (Claude Code, Cursor, etc.): Non-persistent agent. Terminal closes = agent stops.
-  Digests are on-demand only (user types `/ai` to get one).
-
-Save the detected platform in config.json as `"platform": "openclaw"` or `"platform": "other"`.
+opencli/browser. The user invokes `/ai` on demand.
 
 ## First Run — Onboarding
 
@@ -47,142 +31,55 @@ Tell the user:
 
 "I'm your AI Builders Digest. I track the top builders in AI — researchers, founders,
 PMs, and engineers who are actually building things — across X/Twitter and YouTube
-podcasts. Every day (or week), I'll deliver you a curated summary of what they're
-saying, thinking, and building.
+podcasts. Every time you type /ai, I'll fetch fresh content and deliver a curated summary.
 
 I currently track [N] builders on X and [M] podcasts."
 
 (Replace [N] and [M] with actual counts from default-sources.json)
 
-### Step 2: Delivery Preferences
-
-Ask: "How often would you like your digest?"
-- Daily (recommended)
-- Weekly
-
-Then ask: "What time works best? And what timezone are you in?"
-(Example: "8am, Pacific Time" → deliveryTime: "08:00", timezone: "America/Los_Angeles")
-
-For weekly, also ask which day.
-
-### Step 3: Delivery Method
-
-Delivery is always `stdout` — the digest is output directly in the current session.
-On OpenClaw, the channel system handles routing. On other platforms, the user
-invokes `/ai` on demand.
-
-### Step 4: Language
+### Step 2: Language
 
 Ask: "What language do you prefer for your digest?"
 - English
 - Chinese (translated from English sources)
 - Bilingual (both English and Chinese, side by side)
 
-### Step 5: Show Sources
+### Step 3: Show Sources
 
 Show the full list of default builders and podcasts being tracked.
 Read from `config/default-sources.json` and display as a clean list.
 
-### Step 6: Configuration Reminder
+### Step 4: Configuration Reminder
 
 "All your settings can be changed anytime through conversation:
-- 'Switch to weekly digests'
-- 'Change my timezone to Eastern'
+- 'Switch to Chinese/English/bilingual'
 - 'Make the summaries shorter'
 - 'Show me my current settings'
+- 'Add/remove a builder'
 
 No need to edit any files — just tell me what you want."
 
-### Step 7: Set Up Cron
+### Step 5: Save Config
 
-Save the config (include all fields — fill in the user's choices):
 ```bash
 cat > ~/.follow-builders/config.json << 'CFGEOF'
 {
-  "platform": "<openclaw or other>",
   "language": "<en, zh, or bilingual>",
-  "timezone": "<IANA timezone>",
-  "frequency": "<daily or weekly>",
-  "deliveryTime": "<HH:MM>",
-  "weeklyDay": "<day of week, only if weekly>",
-  "delivery": {
-    "method": "stdout"
-  },
+  "delivery": { "method": "stdout" },
   "onboardingComplete": true
 }
 CFGEOF
 ```
 
-Then set up the scheduled job based on platform AND delivery method:
+### Step 6: Welcome Digest
 
-**OpenClaw:**
-
-Build the cron expression from the user's preferences:
-- Daily at 8am → `"0 8 * * *"`
-- Weekly on Monday at 9am → `"0 9 * * 1"`
-
-**IMPORTANT: Do NOT use `--channel last`.** It fails when the user has multiple
-channels configured (e.g. telegram + feishu) because the isolated cron session
-has no "last" channel context. Always detect and specify the exact channel and target.
-
-**Step 1: Detect the current channel and get the target ID.**
-
-The user is messaging you through a specific channel right now. Ask them:
-"Should I deliver your daily digest to this same chat?"
-
-If yes, you need two things: the **channel name** and the **target ID**.
-
-How to get the target ID for each channel:
-
-| Channel | Target format | How to find it |
-|---------|--------------|----------------|
-| Telegram | Numeric chat ID (e.g. `123456789` for DMs, `-1001234567890` for groups) | Run `openclaw logs --follow`, send a test message, read the `from.id` field. Or: `curl "https://api.telegram.org/bot<token>/getUpdates"` and look for `chat.id` |
-| Telegram forum | Group ID with topic (e.g. `-1001234567890:topic:42`) | Same as above, include the topic thread ID |
-| Feishu | User open_id (e.g. `ou_e67df1a850910efb902462aeb87783e5`) or group chat_id (e.g. `oc_xxx`) | Check `openclaw pairing list feishu` or gateway logs after the user messages the bot |
-| Discord | `user:<user_id>` for DMs, `channel:<channel_id>` for channels | User enables Developer Mode in Discord settings, right-clicks to copy IDs |
-| Slack | `channel:<channel_id>` (e.g. `channel:C1234567890`) | Right-click channel name in Slack, copy link, extract the ID |
-| WhatsApp | Phone number with country code (e.g. `+15551234567`) | The user provides it |
-| Signal | Phone number | The user provides it |
-
-**Step 2: Create the cron job with explicit channel and target.**
-```bash
-openclaw cron add \
-  --name "AI Builders Digest" \
-  --cron "<cron expression>" \
-  --tz "<user IANA timezone>" \
-  --session isolated \
-  --message "Run the follow-builders skill: fetch recent posts from all X accounts in default-sources.json, remix into a digest following the prompts, then deliver" \
-  --announce \
-  --channel <channel name> \
-  --to "<target ID>" \
-  --exact
-```
-
-**Step 3: Verify the cron job works by running it once immediately.**
-```bash
-openclaw cron list
-openclaw cron run <jobId>
-```
-
-Wait for the test run to complete and confirm the user actually received the
-digest in their channel. If it fails, check the error:
-```bash
-openclaw cron runs --id <jobId> --limit 1
-```
-
-**Non-persistent agent + on-demand only:**
-Skip cron setup entirely. Tell the user: "Since you chose on-demand delivery,
-there's no scheduled job. Just type /ai whenever you want your digest."
-
-### Step 8: Welcome Digest
-
-**DO NOT skip this step.** Immediately after setting up the cron job, generate
-and send the user their first digest so they can see what it looks like.
+**DO NOT skip this step.** Generate and send the user their first digest so they
+can see what it looks like.
 
 Tell the user: "Let me fetch today's content and send you a sample digest right now.
 This takes about a minute."
 
-Then run the full Content Delivery workflow below right now, without waiting for the cron job.
+Then run the full Content Delivery workflow below.
 
 After delivering the digest, ask for feedback:
 
@@ -191,18 +88,13 @@ After delivering the digest, ask for feedback:
 - Is there anything you'd like me to focus on more (or less)?
 Just tell me and I'll adjust."
 
-Then add the appropriate closing line based on their setup:
-- **OpenClaw:** "Your next digest will arrive automatically at [their chosen time]."
-- **On-demand only:** "Type /ai anytime you want your next digest."
-
-Wait for their response and apply any feedback (update config.json or prompt files
-as needed). Then confirm the changes.
+Then say: "Type /ai anytime you want your next digest."
 
 ---
 
 ## Content Delivery — Digest Run
 
-This workflow runs on cron schedule or when the user invokes `/ai`.
+This workflow runs when the user invokes `/ai`.
 
 ### Step 1: Load context
 
@@ -211,7 +103,7 @@ cd ${CLAUDE_SKILL_DIR}/scripts && node prepare-digest.js 2>/dev/null
 ```
 
 This outputs a JSON blob with:
-- `config` — user's language and delivery preferences
+- `config` — user's language preferences
 - `sources` — X accounts, podcasts, blogs to track
 - `prompts` — the remix instructions to follow
 - `errors` — non-fatal issues (IGNORE these)
@@ -373,16 +265,8 @@ When the user says something that sounds like a settings change, handle it:
 Users can add or remove sources by editing `config/default-sources.json`.
 Apply the changes directly when asked.
 
-### Schedule Changes
-- "Switch to weekly/daily" → Update `frequency` in config.json
-- "Change time to X" → Update `deliveryTime` in config.json
-- "Change timezone to X" → Update `timezone` in config.json, also update the cron job
-
 ### Language Changes
 - "Switch to Chinese/English/bilingual" → Update `language` in config.json
-
-### Delivery Changes
-- "Send to this chat instead" → Set `delivery.method` to "stdout"
 
 ### Prompt Changes
 When a user wants to customize how their digest sounds, copy the relevant prompt
@@ -412,6 +296,6 @@ After any configuration change, confirm what you changed.
 ## Manual Trigger
 
 When the user invokes `/ai` or asks for their digest manually:
-1. Skip cron check — run the digest workflow immediately
+1. Run the digest workflow immediately
 2. Use the same load → fetch → remix → deliver flow
 3. Tell the user you're fetching fresh content (it takes a minute or two)
