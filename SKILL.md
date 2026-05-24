@@ -281,15 +281,31 @@ This outputs a JSON blob with:
 
 ### Step 2: Fetch X content
 
-For each account in `sources.x_accounts`, use the `/twitter-x-fetch` skill
-(or browser/cdp-bridge) to fetch their recent posts. Collect:
+**Primary method: GraphQL API via twitter-x-fetch**
+
+For each account in `sources.x_accounts`, run:
+```bash
+cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db
+```
+
+This uses X's internal GraphQL API with credentials parsed from
+`/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`. Collect:
 - Author name and handle
 - Tweet text (full text, not truncated)
 - Tweet URL
 - Engagement metrics if available
 
-Fetch at most 3 recent posts per account, skip retweets and replies.
-Only include posts from the last 24 hours.
+Skip retweets and replies. Only include posts from the last 24 hours.
+
+**Fallback: OpenClaw browser fetch**
+
+If the GraphQL method fails (no curl files, expired cookies, rate limited),
+use OpenClaw commands to fetch the account's timeline via browser:
+```bash
+openclaw browse "https://x.com/<handle>" --scroll --extract tweets
+```
+
+Or use cdp-bridge to navigate the user's real browser session on x.com.
 
 **If no new posts are found from any account**, tell the user:
 "No new updates from your builders today. Check back tomorrow!" Then stop.
