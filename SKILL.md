@@ -293,19 +293,19 @@ Output fields: `id`, `author`, `created_at`, `text`, `likes`, `retweets`, `repli
 
 Filter out retweets (`is_retweet: true`) and only keep posts from the last 24 hours.
 
-**Fallback: GraphQL API via twitter-x-fetch**
+**Fallback: cdp-bridge subagent**
 
-If `opencli` fails (browser not available, session expired), try:
+If `opencli` fails, spawn an Explore subagent to use `browser_navigate` /
+`browser_extract` on `https://x.com/<handle>` via the user's real browser session.
+
+**Last resort: GraphQL API via twitter-x-fetch**
+
+If both methods fail, try:
 ```bash
 cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db
 ```
 
 This reads credentials from `/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`.
-
-**Last resort: cdp-bridge**
-
-If both methods fail, spawn an Explore subagent to use `browser_navigate` /
-`browser_extract` on `https://x.com/<handle>` via the user's real browser session.
 
 **If no new posts are found from any account**, tell the user:
 "No new updates from your builders today. Check back tomorrow!" Then stop.
