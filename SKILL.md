@@ -1,6 +1,6 @@
 ---
 name: follow-builders
-description: AI builders digest — monitors top AI builders on X and YouTube podcasts, remixes their content into digestible summaries. Use when the user wants AI industry insights, builder updates, or invokes /ai. No API keys or dependencies required — all content is fetched from a central feed.
+description: AI builders digest — monitors top AI builders on X and YouTube podcasts, remixes their content into digestible summaries. Use when the user wants AI industry insights, builder updates, or invokes /ai. No API keys required — content is fetched directly by the agent.
 ---
 
 # Follow Builders, Not Influencers
@@ -11,9 +11,8 @@ digestible summaries of what they're saying.
 
 Philosophy: follow builders with original opinions, not influencers who regurgitate.
 
-**No API keys or environment variables are required from users.** All content
-(X/Twitter posts and YouTube transcripts) is fetched centrally and served via
-a public feed. Users only need API keys if they choose Telegram or email delivery.
+**No API keys required.** The agent fetches X/Twitter content directly via
+OpenClaw/browser. Only Telegram or Email delivery needs optional API keys.
 
 ## Detecting Platform
 
@@ -47,8 +46,7 @@ PMs, and engineers who are actually building things — across X/Twitter and You
 podcasts. Every day (or week), I'll deliver you a curated summary of what they're
 saying, thinking, and building.
 
-I currently track [N] builders on X and [M] podcasts. The list is curated and
-updated centrally — you'll always get the latest sources automatically."
+I currently track [N] builders on X and [M] podcasts."
 
 (Replace [N] and [M] with actual counts from default-sources.json)
 
@@ -120,10 +118,9 @@ Ask: "What language do you prefer for your digest?"
 - Chinese (translated from English sources)
 - Bilingual (both English and Chinese, side by side)
 
-### Step 5: API Keys
+### Step 5: API Keys (delivery only)
 
-**If the user chose "stdout" or "right here" delivery:** No API keys needed at all!
-All content is fetched centrally. Skip to Step 6.
+**If the user chose "stdout" or "right here" delivery:** No API keys needed. Skip to Step 6.
 
 **If the user chose Telegram or Email delivery:**
 Create the .env file with only the delivery key they need:
@@ -141,17 +138,10 @@ ENVEOF
 
 Uncomment only the line they need. Open the file for them to paste the key.
 
-Tell the user: "All podcast and X/Twitter content is fetched for you automatically
-from a central feed — no API keys needed for that. You only need a key for
-[Telegram/email] delivery."
-
 ### Step 6: Show Sources
 
 Show the full list of default builders and podcasts being tracked.
 Read from `config/default-sources.json` and display as a clean list.
-
-Tell the user: "The source list is curated and updated centrally. You'll
-automatically get the latest builders and podcasts without doing anything."
 
 ### Step 7: Configuration Reminder
 
@@ -223,23 +213,11 @@ openclaw cron add \
   --cron "<cron expression>" \
   --tz "<user IANA timezone>" \
   --session isolated \
-  --message "Run the follow-builders skill: execute prepare-digest.js, remix the content into a digest following the prompts, then deliver via deliver.js" \
+  --message "Run the follow-builders skill: fetch recent posts from all X accounts in default-sources.json, remix into a digest following the prompts, then deliver" \
   --announce \
   --channel <channel name> \
   --to "<target ID>" \
   --exact
-```
-
-Examples:
-```bash
-# Telegram DM
-openclaw cron add --name "AI Builders Digest" --cron "0 8 * * *" --tz "Asia/Shanghai" --session isolated --message "..." --announce --channel telegram --to "123456789" --exact
-
-# Feishu
-openclaw cron add --name "AI Builders Digest" --cron "0 8 * * *" --tz "Asia/Shanghai" --session isolated --message "..." --announce --channel feishu --to "ou_e67df1a850910efb902462aeb87783e5" --exact
-
-# Discord channel
-openclaw cron add --name "AI Builders Digest" --cron "0 8 * * *" --tz "America/New_York" --session isolated --message "..." --announce --channel discord --to "channel:1234567890" --exact
 ```
 
 **Step 3: Verify the cron job works by running it once immediately.**
@@ -254,25 +232,7 @@ digest in their channel. If it fails, check the error:
 openclaw cron runs --id <jobId> --limit 1
 ```
 
-Common errors and fixes:
-- "Channel is required when multiple channels are configured" → you used `--channel last`, specify the exact channel
-- "Delivering to X requires target" → you forgot `--to`, add the target ID
-- "No agent" → add `--agent <agent-id>` if the OpenClaw instance has multiple agents
-
-Do NOT proceed to the welcome digest step until the cron delivery has been verified.
-
-**Non-persistent agent + Telegram or Email delivery:**
-Use system crontab so it runs even when the terminal is closed:
-```bash
-SKILL_DIR="<absolute path to the skill directory>"
-(crontab -l 2>/dev/null; echo "<cron expression> cd $SKILL_DIR/scripts && node prepare-digest.js 2>/dev/null | node deliver.js 2>/dev/null") | crontab -
-```
-Note: this runs the prepare script and pipes its output directly to delivery,
-bypassing the agent entirely. The digest won't be remixed by an LLM — it will
-deliver the raw JSON. For full remixed digests, the user should use /ai manually
-or switch to OpenClaw.
-
-**Non-persistent agent + on-demand only (no Telegram/Email):**
+**Non-persistent agent + on-demand only:**
 Skip cron setup entirely. Tell the user: "Since you chose on-demand delivery,
 there's no scheduled job. Just type /ai whenever you want your digest."
 
@@ -284,8 +244,7 @@ and send the user their first digest so they can see what it looks like.
 Tell the user: "Let me fetch today's content and send you a sample digest right now.
 This takes about a minute."
 
-Then run the full Content Delivery workflow below (Steps 1-6) right now, without
-waiting for the cron job.
+Then run the full Content Delivery workflow below right now, without waiting for the cron job.
 
 After delivering the digest, ask for feedback:
 
@@ -308,78 +267,78 @@ as needed). Then confirm the changes.
 
 This workflow runs on cron schedule or when the user invokes `/ai`.
 
-### Step 1: Load Config
-
-Read `~/.follow-builders/config.json` for user preferences.
-
-### Step 2: Generate feeds, then prepare digest
-
-First, run the feed generator to fetch fresh content from all sources
-(X/Twitter, podcasts, blogs). This reads API keys from `~/.follow-builders/.env`.
-
-```bash
-cd ${CLAUDE_SKILL_DIR}/scripts && node generate-feed.js 2>/dev/null
-```
-
-Then, run the prepare script to assemble everything into a single JSON blob.
+### Step 1: Load context
 
 ```bash
 cd ${CLAUDE_SKILL_DIR}/scripts && node prepare-digest.js 2>/dev/null
 ```
 
-The script outputs a single JSON blob with everything you need:
+This outputs a JSON blob with:
 - `config` — user's language and delivery preferences
-- `podcasts` — podcast episodes with full transcripts
-- `x` — builders with their recent tweets (text, URLs, bios)
+- `sources` — X accounts, podcasts, blogs to track
 - `prompts` — the remix instructions to follow
-- `stats` — counts of episodes and tweets
 - `errors` — non-fatal issues (IGNORE these)
 
-If the script fails entirely (no JSON output), tell the user to check their
-internet connection. Otherwise, use whatever content is in the JSON.
+### Step 2: Fetch X content
 
-### Step 3: Check for content
+For each account in `sources.x_accounts`, use the `/twitter-x-fetch` skill
+(or browser/cdp-bridge) to fetch their recent posts. Collect:
+- Author name and handle
+- Tweet text (full text, not truncated)
+- Tweet URL
+- Engagement metrics if available
 
-If `stats.podcastEpisodes` is 0 AND `stats.xBuilders` is 0, tell the user:
+Fetch at most 3 recent posts per account, skip retweets and replies.
+Only include posts from the last 24 hours.
+
+**If no new posts are found from any account**, tell the user:
 "No new updates from your builders today. Check back tomorrow!" Then stop.
+
+### Step 3: Fetch additional content (optional)
+
+If `sources.podcasts` has entries, check for new episodes by browsing their
+YouTube or RSS pages. If a new episode is found, fetch its transcript or summary.
+
+If `sources.blogs` has entries, scrape the blog index pages for new articles
+and fetch the full text.
 
 ### Step 4: Remix content
 
-**Your ONLY job is to remix the content from the JSON.** Do NOT fetch anything
-from the web, visit any URLs, or call any APIs. Everything is in the JSON.
-
-Read the prompts from the `prompts` field in the JSON:
+Read the prompts from the `prompts` field:
 - `prompts.digest_intro` — overall framing rules
-- `prompts.summarize_podcast` — how to remix podcast transcripts
 - `prompts.summarize_tweets` — how to remix tweets
+- `prompts.summarize_podcast` — how to remix podcast transcripts
+- `prompts.summarize_blogs` — how to remix blog posts
 - `prompts.translate` — how to translate to Chinese
 
-**Tweets (process first):** The `x` array has builders with tweets. Process one at a time:
-1. Use their `bio` field for their role (e.g. bio says "ceo @box" → "Box CEO Aaron Levie")
-2. Summarize their `tweets` using `prompts.summarize_tweets`
-3. Every tweet MUST include its `url` from the JSON
+**Tweets (process first):** Process one builder at a time:
+1. Use their name/handle for identification
+2. Summarize their tweets using `prompts.summarize_tweets`
+3. Every tweet MUST include its URL
 
-**Podcast (process second):** The `podcasts` array has at most 1 episode. If present:
-1. Summarize its `transcript` using `prompts.summarize_podcast`
-2. Use `name`, `title`, and `url` from the JSON object — NOT from the transcript
+**Podcasts (process second):** If a new episode was found:
+1. Summarize using `prompts.summarize_podcast`
+2. Include the podcast name, episode title, and URL
+
+**Blogs (process third):** If new articles were found:
+1. Summarize using `prompts.summarize_blogs`
+2. Include the blog name, article title, and URL
 
 Assemble the digest following `prompts.digest_intro`.
 
 **ABSOLUTE RULES:**
-- NEVER invent or fabricate content. Only use what's in the JSON.
+- NEVER invent or fabricate content. Only use what you actually fetched.
 - Every piece of content MUST have its URL. No URL = do not include.
-- Do NOT guess job titles. Use the `bio` field or just the person's name.
-- Do NOT visit x.com, search the web, or call any API.
+- Do NOT guess job titles. Use whatever info you have or just the person's name.
 
 ### Step 5: Apply language
 
-Read `config.language` from the JSON:
+Read `config.language`:
 - **"en":** Entire digest in English.
 - **"zh":** Entire digest in Chinese. Follow `prompts.translate`.
 - **"bilingual":** Interleave English and Chinese **paragraph by paragraph**.
   For each builder's tweet summary: English version, then Chinese translation
-  directly below, then the next builder. For the podcast: English summary,
-  then Chinese translation directly below. Like this:
+  directly below, then the next builder. Like this:
 
   ```
   Box CEO Aaron Levie argues that AI agents will reshape software procurement...
@@ -387,12 +346,6 @@ Read `config.language` from the JSON:
 
   Box CEO Aaron Levie 认为 AI agent 将从根本上重塑软件采购...
   https://x.com/levie/status/123
-
-  Replit CEO Amjad Masad launched Agent 4...
-  https://x.com/amasad/status/456
-
-  Replit CEO Amjad Masad 发布了 Agent 4...
-  https://x.com/amasad/status/456
   ```
 
   Do NOT output all English first then all Chinese. Interleave them.
@@ -401,7 +354,7 @@ Read `config.language` from the JSON:
 
 ### Step 6: Deliver
 
-Read `config.delivery.method` from the JSON:
+Read `config.delivery.method`:
 
 **If "telegram" or "email":**
 ```bash
@@ -420,10 +373,8 @@ Just output the digest directly.
 When the user says something that sounds like a settings change, handle it:
 
 ### Source Changes
-The source list is managed centrally and cannot be modified by users.
-If a user asks to add or remove sources, tell them: "The source list is curated
-centrally and updates automatically. If you'd like to suggest a source, you can
-open an issue at https://github.com/zarazhangrui/follow-builders."
+Users can add or remove sources by editing `config/default-sources.json`.
+Apply the changes directly when asked.
 
 ### Schedule Changes
 - "Switch to weekly/daily" → Update `frequency` in config.json
@@ -440,8 +391,7 @@ open an issue at https://github.com/zarazhangrui/follow-builders."
 
 ### Prompt Changes
 When a user wants to customize how their digest sounds, copy the relevant prompt
-file to `~/.follow-builders/prompts/` and edit it there. This way their
-customization persists and won't be overwritten by central updates.
+file to `~/.follow-builders/prompts/` and edit it there.
 
 ```bash
 mkdir -p ~/.follow-builders/prompts
@@ -457,7 +407,7 @@ Then edit `~/.follow-builders/prompts/<filename>.md` with the user's requested c
 
 ### Info Requests
 - "Show my settings" → Read and display config.json in a friendly format
-- "Show my sources" / "Who am I following?" → Read config + defaults and list all active sources
+- "Show my sources" / "Who am I following?" → Read default-sources.json and list all active sources
 - "Show my prompts" → Read and display the prompt files
 
 After any configuration change, confirm what you changed.
@@ -468,5 +418,5 @@ After any configuration change, confirm what you changed.
 
 When the user invokes `/ai` or asks for their digest manually:
 1. Skip cron check — run the digest workflow immediately
-2. Use the same fetch → remix → deliver flow as the cron run
+2. Use the same load → fetch → remix → deliver flow
 3. Tell the user you're fetching fresh content (it takes a minute or two)
