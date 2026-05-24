@@ -297,15 +297,13 @@ This uses X's internal GraphQL API with credentials parsed from
 
 Skip retweets and replies. Only include posts from the last 24 hours.
 
-**Fallback: OpenClaw browser fetch**
+**Fallback: opencli**
 
 If the GraphQL method fails (no curl files, expired cookies, rate limited),
-use OpenClaw commands to fetch the account's timeline via browser:
+use `opencli` to fetch the account's timeline:
 ```bash
-openclaw browse "https://x.com/<handle>" --scroll --extract tweets
+opencli x <handle>
 ```
-
-Or use cdp-bridge to navigate the user's real browser session on x.com.
 
 **If no new posts are found from any account**, tell the user:
 "No new updates from your builders today. Check back tomorrow!" Then stop.
