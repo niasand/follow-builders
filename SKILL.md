@@ -417,9 +417,9 @@ feishu-cli doc import ~/.follow-builders/digests/$(date +%Y-%m-%d).md \
 
 # 3. Transfer ownership to user
 feishu-cli perm transfer-owner <doc_token> \
-  --member-type openid \
-  --member-id ou_c4d77609d5fba99f3edb9a2fba1e14bc \
-  --notification false
+  --member-type=openid \
+  --member-id=ou_c4d77609d5fba99f3edb9a2fba1e14bc \
+  --notification=false
 
 # 4. Disable external sharing
 feishu-cli perm public-update <doc_token> \
