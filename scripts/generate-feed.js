@@ -3,19 +3,24 @@
 // ============================================================================
 // Follow Builders — Central Feed Generator
 // ============================================================================
-// Runs on GitHub Actions (daily at 6am UTC) to fetch content and publish
-// feed-x.json, feed-podcasts.json, and feed-blogs.json.
+// Runs locally to fetch content and produce feed-x.json, feed-podcasts.json,
+// and feed-blogs.json. Reads API keys from ~/.follow-builders/.env.
 //
 // Deduplication: tracks previously seen tweet IDs, episode GUIDs, and article
 // URLs in state-feed.json so content is never repeated across runs.
 //
 // Usage: node generate-feed.js [--tweets-only | --podcasts-only | --blogs-only]
-// Env vars needed: X_BEARER_TOKEN, POD2TXT_API_KEY
+// Env vars needed: X_BEARER_TOKEN, POD2TXT_API_KEY (set in ~/.follow-builders/.env)
 // ============================================================================
 
 import { readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import { homedir } from "os";
+import { config as loadEnv } from "dotenv";
+
+// Load API keys from ~/.follow-builders/.env
+loadEnv({ path: join(homedir(), ".follow-builders", ".env") });
 
 // -- Constants ---------------------------------------------------------------
 

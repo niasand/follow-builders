@@ -312,10 +312,16 @@ This workflow runs on cron schedule or when the user invokes `/ai`.
 
 Read `~/.follow-builders/config.json` for user preferences.
 
-### Step 2: Run the prepare script
+### Step 2: Generate feeds, then prepare digest
 
-This script handles ALL data fetching deterministically — feeds, prompts, config.
-You do NOT fetch anything yourself.
+First, run the feed generator to fetch fresh content from all sources
+(X/Twitter, podcasts, blogs). This reads API keys from `~/.follow-builders/.env`.
+
+```bash
+cd ${CLAUDE_SKILL_DIR}/scripts && node generate-feed.js 2>/dev/null
+```
+
+Then, run the prepare script to assemble everything into a single JSON blob.
 
 ```bash
 cd ${CLAUDE_SKILL_DIR}/scripts && node prepare-digest.js 2>/dev/null
