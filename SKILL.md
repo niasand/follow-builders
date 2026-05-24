@@ -393,6 +393,48 @@ If delivery fails, show the digest in the terminal as fallback.
 **If "stdout" (default):**
 Just output the digest directly.
 
+### Step 7: Archive (Feishu + Obsidian)
+
+After delivery, save the digest to both Feishu and Obsidian.
+
+**Save to local file first:**
+```bash
+mkdir -p ~/.follow-builders/digests
+cat > ~/.follow-builders/digests/$(date +%Y-%m-%d).md << 'DIGESTEOF'
+<digest text>
+DIGESTEOF
+```
+
+**Feishu:**
+```bash
+# 1. Create Feishu doc from markdown
+feishu-cli doc import ~/.follow-builders/digests/$(date +%Y-%m-%d).md \
+  --title "AI Builders Digest — $(date +%Y-%m-%d)" \
+  -o /tmp/fb-feishu-result.json
+
+# 2. Extract doc_token from result
+# The output JSON contains the document_id
+
+# 3. Transfer ownership to user
+feishu-cli perm transfer-owner <doc_token> \
+  --member-type openid \
+  --member-id ou_c4d77609d5fba99f3edb9a2fba1e14bc \
+  --notification false
+
+# 4. Disable external sharing
+feishu-cli perm public-update <doc_token> \
+  --external-access=false \
+  --invite-external=false
+```
+
+**Obsidian:**
+```bash
+cp ~/.follow-builders/digests/$(date +%Y-%m-%d).md \
+  "/Users/zhiwei/Library/Mobile Documents/iCloud~md~obsidian/Documents/Clippings/AI Builders Digest $(date +%Y-%m-%d).md"
+```
+
+If either step fails, log the error but do NOT stop — the digest was already delivered.
+
 ---
 
 ## Configuration Handling
