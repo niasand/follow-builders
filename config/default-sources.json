@@ -47,44 +47,59 @@
       "fetchMethod": "http"
     }
   ],
-  "x_accounts": [
-    { "name": "Andrej Karpathy", "handle": "karpathy" },
-    { "name": "Swyx", "handle": "swyx" },
-    { "name": "Josh Woodward", "handle": "joshwoodward" },
-    { "name": "Kevin Weil", "handle": "kevinweil" },
-    { "name": "Peter Yang", "handle": "petergyang" },
-    { "name": "Nan Yu", "handle": "thenanyu" },
-    { "name": "Madhu Guru", "handle": "realmadhuguru" },
-    { "name": "Amanda Askell", "handle": "AmandaAskell" },
-    { "name": "Cat Wu", "handle": "_catwu" },
-    { "name": "Thariq", "handle": "trq212" },
-    { "name": "Google Labs", "handle": "GoogleLabs" },
-    { "name": "Amjad Masad", "handle": "amasad" },
-    { "name": "Guillermo Rauch", "handle": "rauchg" },
-    { "name": "Alex Albert", "handle": "alexalbert__" },
-    { "name": "Aaron Levie", "handle": "levie" },
-    { "name": "Ryo Lu", "handle": "ryolu_" },
-    { "name": "Garry Tan", "handle": "garrytan" },
-    { "name": "Matt Turck", "handle": "mattturck" },
-    { "name": "Zara Zhang", "handle": "zarazhangrui" },
-    { "name": "Nikunj Kothari", "handle": "nikunj" },
-    { "name": "Peter Steinberger", "handle": "steipete" },
-    { "name": "Dan Shipper", "handle": "danshipper" },
-    { "name": "Aditya Agarwal", "handle": "adityaag" },
-    { "name": "Sam Altman", "handle": "sama" },
-    { "name": "Claude", "handle": "claudeai" },
-    { "name": "Greg Isenberg", "handle": "gregisenberg" },
-    { "name": "Riley Brown", "handle": "rileybrown" },
-    { "name": "Jack Friks", "handle": "jackfriks" },
-    { "name": "Levelsio", "handle": "levelsio" },
-    { "name": "Marc Lou", "handle": "marclou" },
-    { "name": "EXM", "handle": "EXM7777" },
-    { "name": "eptwts", "handle": "eptwts" },
-    { "name": "God of Prompt", "handle": "godofprompt" },
-    { "name": "Vasuman", "handle": "vasuman" },
-    { "name": "Amir Mushich", "handle": "AmirMushich" },
-    { "name": "0xROAS", "handle": "0xROAS" },
-    { "name": "Ege Berkina", "handle": "egeberkina" },
-    { "name": "Meng To", "handle": "MengTo" }
+  "x_groups": [
+    {
+      "name": "Research / Tech",
+      "accounts": [
+        { "name": "Andrej Karpathy", "handle": "karpathy" },
+        { "name": "Swyx", "handle": "swyx" },
+        { "name": "Amanda Askell", "handle": "AmandaAskell" },
+        { "name": "Alex Albert", "handle": "alexalbert__" },
+        { "name": "Cat Wu", "handle": "_catwu" },
+        { "name": "Google Labs", "handle": "GoogleLabs" },
+        { "name": "Claude", "handle": "claudeai" },
+        { "name": "Thariq", "handle": "trq212" },
+        { "name": "Nan Yu", "handle": "thenanyu" },
+        { "name": "Madhu Guru", "handle": "realmadhuguru" },
+        { "name": "Ryo Lu", "handle": "ryolu_" },
+        { "name": "Peter Steinberger", "handle": "steipete" }
+      ]
+    },
+    {
+      "name": "Startups / Product",
+      "accounts": [
+        { "name": "Amjad Masad", "handle": "amasad" },
+        { "name": "Guillermo Rauch", "handle": "rauchg" },
+        { "name": "Aaron Levie", "handle": "levie" },
+        { "name": "Garry Tan", "handle": "garrytan" },
+        { "name": "Josh Woodward", "handle": "joshwoodward" },
+        { "name": "Kevin Weil", "handle": "kevinweil" },
+        { "name": "Peter Yang", "handle": "petergyang" },
+        { "name": "Greg Isenberg", "handle": "gregisenberg" },
+        { "name": "Levelsio", "handle": "levelsio" },
+        { "name": "Marc Lou", "handle": "marclou" },
+        { "name": "Nikunj Kothari", "handle": "nikunj" },
+        { "name": "Aditya Agarwal", "handle": "adityaag" },
+        { "name": "Dan Shipper", "handle": "danshipper" },
+        { "name": "Matt Turck", "handle": "mattturck" },
+        { "name": "Zara Zhang", "handle": "zarazhangrui" }
+      ]
+    },
+    {
+      "name": "AI Apps / Indie Dev",
+      "accounts": [
+        { "name": "Riley Brown", "handle": "rileybrown" },
+        { "name": "Jack Friks", "handle": "jackfriks" },
+        { "name": "EXM", "handle": "EXM7777" },
+        { "name": "eptwts", "handle": "eptwts" },
+        { "name": "God of Prompt", "handle": "godofprompt" },
+        { "name": "Vasuman", "handle": "vasuman" },
+        { "name": "Amir Mushich", "handle": "AmirMushich" },
+        { "name": "0xROAS", "handle": "0xROAS" },
+        { "name": "Ege Berkina", "handle": "egeberkina" },
+        { "name": "Meng To", "handle": "MengTo" },
+        { "name": "Sam Altman", "handle": "sama" }
+      ]
+    }
   ]
 }

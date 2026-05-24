@@ -70,7 +70,11 @@ async function main() {
     }
   }
 
-  // 4. Output
+  // 4. Stats
+  const xGroups = sources.x_groups || [];
+  const totalXAccounts = xGroups.reduce((sum, g) => sum + (g.accounts?.length || 0), 0);
+
+  // 5. Output
   console.log(JSON.stringify({
     status: 'ok',
     config: {
@@ -80,7 +84,8 @@ async function main() {
     },
     sources,
     stats: {
-      xAccounts: sources.x_accounts?.length || 0,
+      xGroups: xGroups.length,
+      xAccounts: totalXAccounts,
       podcasts: sources.podcasts?.length || 0,
       blogs: sources.blogs?.length || 0
     },

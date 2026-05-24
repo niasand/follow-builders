@@ -279,36 +279,47 @@ This outputs a JSON blob with:
 - `prompts` — the remix instructions to follow
 - `errors` — non-fatal issues (IGNORE these)
 
-### Step 2: Fetch X content
+### Step 2: Fetch X content (parallel subagents)
 
-**Primary: opencli (browser-based, no API keys needed)**
+Spawn **3 subagents in parallel**, each responsible for a group of accounts.
+Each subagent fetches tweets sequentially within its group, then returns results.
 
-For each account in `sources.x_accounts`, run in parallel (spawn subagents for speed):
+**Group A — Research / Tech** (12 accounts):
+karpathy, swyx, AmandaAskell, alexalbert__, _catwu, GoogleLabs, claudeai, trq212, thenanyu, realmadhuguru, ryolu_, steipete
+
+**Group B — Startups / Product** (15 accounts):
+amasad, rauchg, levie, garrytan, joshwoodward, kevinweil, petergyang, gregisenberg, levelsio, marclou, nikunj, adityaag, danshipper, mattturck, zarazhangrui
+
+**Group C — AI Apps / Indie Dev** (11 accounts):
+rileybrown, jackfriks, EXM7777, eptwts, godofprompt, vasuman, AmirMushich, 0xROAS, egeberkina, MengTo, sama
+
+**For each account, the subagent runs:**
+
 ```bash
 opencli twitter tweets <handle> --limit 3 -f json
 ```
 
-This fetches the user's 3 most recent tweets via browser automation.
-Output fields: `id`, `author`, `created_at`, `text`, `likes`, `retweets`, `replies`, `views`, `url`.
+**Fallback chain per account:**
 
-Filter out retweets (`is_retweet: true`) and only keep posts from the last 24 hours.
+1. **opencli** (primary): browser automation, no keys needed.
+   Output fields: `id`, `author`, `created_at`, `text`, `likes`, `retweets`, `replies`, `views`, `url`.
+   Filter out retweets (`is_retweet: true`), only keep posts from the last 24 hours.
 
-**Fallback: cdp-bridge subagent**
+2. **cdp-bridge**: use `browser_navigate` / `browser_extract` on `https://x.com/<handle>`
+   via the user's real browser session.
 
-If `opencli` fails, spawn an Explore subagent to use `browser_navigate` /
-`browser_extract` on `https://x.com/<handle>` via the user's real browser session.
+3. **GraphQL**: `cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db`
+   Reads credentials from `/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`.
 
-**Last resort: GraphQL API via twitter-x-fetch**
-
-If both methods fail, try:
-```bash
-cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db
+**Each subagent returns** a JSON array of results:
+```json
+[
+  {"handle": "karpathy", "name": "Andrej Karpathy", "tweets": [{"text": "...", "url": "...", "created_at": "...", "likes": 123}]}
+]
 ```
 
-This reads credentials from `/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`.
-
-**If no new posts are found from any account**, tell the user:
-"No new updates from your builders today. Check back tomorrow!" Then stop.
+**After all 3 subagents complete**, merge results. If no tweets were found across
+all groups, tell the user: "No new updates from your builders today. Check back tomorrow!" Then stop.
 
 ### Step 3: Fetch additional content (optional)
 
