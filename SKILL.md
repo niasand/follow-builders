@@ -296,7 +296,7 @@ rileybrown, jackfriks, EXM7777, eptwts, godofprompt, vasuman, AmirMushich, 0xROA
 **For each account, the subagent runs:**
 
 ```bash
-opencli twitter tweets <handle> --limit 3 -f json
+opencli twitter tweets <handle> --limit 3 -f json --window background
 ```
 
 **Fallback chain per account:**
