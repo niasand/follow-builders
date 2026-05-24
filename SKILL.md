@@ -1,6 +1,12 @@
 ---
 name: follow-builders
 description: AI builders digest — monitors top AI builders on X and YouTube podcasts, remixes their content into digestible summaries. Use when the user wants AI industry insights, builder updates, or invokes /ai. No API keys required — content is fetched directly by the agent.
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Agent
 ---
 
 # Follow Builders, Not Influencers
