@@ -125,19 +125,24 @@ rileybrown, jackfriks, EXM7777, eptwts, godofprompt, vasuman, AmirMushich, 0xROA
 **For each account, the subagent runs:**
 
 ```bash
-opencli twitter tweets <handle> --limit 3 -f json --window background
+# Fetch 5 recent tweets
+opencli twitter tweets <handle> --limit 5 -f json --window background
+
+# For each tweet that is a thread starter, fetch up to 5 replies in the thread
+opencli twitter tweets <handle> --limit 5 --threads 5 -f json --window background
 ```
 
 **Fallback chain per account:**
 
 1. **opencli** (primary): browser automation, no keys needed.
    Output fields: `id`, `author`, `created_at`, `text`, `likes`, `retweets`, `replies`, `views`, `url`.
+   `--threads 5` fetches up to 5 self-replies (thread continuation) under each tweet.
    Filter out retweets (`is_retweet: true`), only keep posts from the last 24 hours.
 
 2. **cdp-bridge**: use `browser_navigate` / `browser_extract` on `https://x.com/<handle>`
    via the user's real browser session.
 
-3. **GraphQL**: `cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 3 --no-db`
+3. **GraphQL**: `cd /Users/zhiwei/Documents/web_anywhere && python3 user_timeline.py <handle> --pages 1 --count 5 --no-db`
    Reads credentials from `/Users/zhiwei/Downloads/api-curl/api.x.com_*.sh`.
 
 **Each subagent returns** a JSON array of results:
